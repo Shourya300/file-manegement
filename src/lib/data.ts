@@ -1,9 +1,10 @@
 export type TimelineEvent = {
   id: number;
-  type: "upload" | "status_change" | "comment" | "creation";
+  type: "upload" | "status_change" | "comment" | "creation" | "commit" | "pr";
   content: string;
   date: string;
   time: string;
+  user?: string;
   file?: {
     name: string;
     size: string;
@@ -24,6 +25,20 @@ export type IndividualProject = {
   timeline: TimelineEvent[];
 };
 
+export type GroupMember = {
+  id: string;
+  name: string;
+  role: string;
+  color: string;
+};
+
+export type GroupTask = {
+  id: number;
+  title: string;
+  status: "todo" | "in-progress" | "done";
+  assigneeId: string;
+};
+
 export type GroupProjectUpdate = {
   user: string;
   action: string;
@@ -35,8 +50,11 @@ export type GroupProject = {
   title: string;
   course: string;
   dueDate: string;
-  team: string[];
+  description: string;
+  team: GroupMember[];
   recentUpdates: GroupProjectUpdate[];
+  timeline: TimelineEvent[];
+  tasks: GroupTask[];
 };
 
 export const individualProjects: IndividualProject[] = [
@@ -162,21 +180,57 @@ export const groupProjects: GroupProject[] = [
     title: "Web App Final Project",
     course: "CS 405",
     dueDate: "May 15, 2026",
-    team: ["Alice", "Bob", "Charlie", "You"],
+    description: "Build a full-stack web application using Next.js and TailwindCSS. The application must feature user authentication, real-time database updates, and a responsive mobile-first design. The final deliverable includes a working deployment and a presentation.",
+    team: [
+      { id: "u1", name: "Alice", role: "Frontend Lead", color: "bg-pink-500" },
+      { id: "u2", name: "Bob", role: "Backend Dev", color: "bg-blue-500" },
+      { id: "u3", name: "Charlie", role: "Designer", color: "bg-amber-500" },
+      { id: "u4", name: "You", role: "Fullstack / DevOps", color: "bg-indigo-500" },
+    ],
     recentUpdates: [
       { user: "Alice", action: "Updated 'UI_mockups.fig'", time: "1 hr ago" },
       { user: "Bob", action: "Pushed to 'feature/auth' branch", time: "3 hrs ago" },
     ],
+    timeline: [
+      { id: 1001, type: "upload", user: "Alice", content: "Updated 'UI_mockups.fig' with new dashboard layout.", date: "May 1, 2026", time: "10:00 AM", file: { name: "UI_mockups.fig", size: "4.2 MB", type: "Figma File" } },
+      { id: 1002, type: "commit", user: "Bob", content: "Pushed to 'feature/auth' branch: Added JWT token verification.", date: "May 1, 2026", time: "08:15 AM" },
+      { id: 1003, type: "pr", user: "You", content: "Opened Pull Request: 'Setup Vercel deployment pipeline'", date: "April 30, 2026", time: "04:30 PM" },
+      { id: 1004, type: "comment", user: "Charlie", content: "Left a comment on the color palette selection.", date: "April 29, 2026", time: "02:00 PM" },
+      { id: 1005, type: "creation", user: "You", content: "Project repository initialized.", date: "April 28, 2026", time: "09:00 AM" },
+    ],
+    tasks: [
+      { id: 1, title: "Design Login Screen", status: "done", assigneeId: "u3" },
+      { id: 2, title: "Implement NextAuth", status: "in-progress", assigneeId: "u2" },
+      { id: 3, title: "Setup CI/CD Actions", status: "in-progress", assigneeId: "u4" },
+      { id: 4, title: "Build Dashboard UI components", status: "todo", assigneeId: "u1" },
+      { id: 5, title: "Write API endpoints for user data", status: "todo", assigneeId: "u2" },
+    ]
   },
   {
     id: 2,
     title: "Network Protocols Implementation",
     course: "CS 320",
     dueDate: "May 12, 2026",
-    team: ["Dave", "Eve", "You"],
+    description: "Implement a reliable transport protocol on top of UDP. The protocol must handle packet loss, reordering, and corruption. You will be tested against a chaotic network emulator.",
+    team: [
+      { id: "u5", name: "Dave", role: "Protocol Logic", color: "bg-emerald-500" },
+      { id: "u6", name: "Eve", role: "Testing & QA", color: "bg-rose-500" },
+      { id: "u4", name: "You", role: "Socket Programming", color: "bg-indigo-500" },
+    ],
     recentUpdates: [
       { user: "Dave", action: "Uploaded 'tcp_handshake.md'", time: "5 hrs ago" },
       { user: "You", action: "Modified 'server.py'", time: "1 day ago" },
     ],
+    timeline: [
+      { id: 2001, type: "upload", user: "Dave", content: "Uploaded documentation for handshake state machine.", date: "May 1, 2026", time: "07:00 AM", file: { name: "tcp_handshake.md", size: "12 KB", type: "Markdown" } },
+      { id: 2002, type: "commit", user: "You", content: "Modified 'server.py' to handle dropped ACKs.", date: "April 30, 2026", time: "11:20 PM" },
+      { id: 2003, type: "upload", user: "Eve", content: "Added initial packet loss test scripts.", date: "April 29, 2026", time: "01:15 PM", file: { name: "test_loss.py", size: "3 KB", type: "Python Script" } },
+    ],
+    tasks: [
+      { id: 6, title: "Write UDP Wrapper", status: "done", assigneeId: "u4" },
+      { id: 7, title: "Implement Sliding Window", status: "in-progress", assigneeId: "u5" },
+      { id: 8, title: "Create test cases for 20% packet loss", status: "todo", assigneeId: "u6" },
+      { id: 9, title: "Handle out-of-order packets", status: "todo", assigneeId: "u4" },
+    ]
   },
 ];
