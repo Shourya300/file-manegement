@@ -5,6 +5,7 @@ export type TimelineEvent = {
   date: string;
   time: string;
   user?: string;
+  deadline?: string;
   file?: {
     name: string;
     size: string;
@@ -35,6 +36,8 @@ export type GroupMember = {
 export type GroupTask = {
   id: number;
   title: string;
+  about?: string;
+  deadline?: string;
   status: "todo" | "in-progress" | "done";
   assigneeId: string;
 };
@@ -199,11 +202,11 @@ export const groupProjects: GroupProject[] = [
       { id: 1005, type: "creation", user: "You", content: "Project repository initialized.", date: "April 28, 2026", time: "09:00 AM" },
     ],
     tasks: [
-      { id: 1, title: "Design Login Screen", status: "done", assigneeId: "u3" },
-      { id: 2, title: "Implement NextAuth", status: "in-progress", assigneeId: "u2" },
-      { id: 3, title: "Setup CI/CD Actions", status: "in-progress", assigneeId: "u4" },
-      { id: 4, title: "Build Dashboard UI components", status: "todo", assigneeId: "u1" },
-      { id: 5, title: "Write API endpoints for user data", status: "todo", assigneeId: "u2" },
+      { id: 1, title: "Design Login Screen", about: "Create the first-pass authentication screen with form states and responsive layout.", deadline: "2026-05-04", status: "done", assigneeId: "u3" },
+      { id: 2, title: "Implement NextAuth", about: "Wire up the authentication flow and confirm protected route behavior.", deadline: "2026-05-06", status: "in-progress", assigneeId: "u2" },
+      { id: 3, title: "Setup CI/CD Actions", about: "Add deployment checks and automate preview builds for each branch.", deadline: "2026-05-08", status: "in-progress", assigneeId: "u4" },
+      { id: 4, title: "Build Dashboard UI components", about: "Finish the reusable dashboard cards, nav states, and responsive layout.", deadline: "2026-05-10", status: "todo", assigneeId: "u1" },
+      { id: 5, title: "Write API endpoints for user data", about: "Create CRUD endpoints and verify the response contracts for the UI.", deadline: "2026-05-12", status: "todo", assigneeId: "u2" },
     ]
   },
   {
@@ -227,10 +230,10 @@ export const groupProjects: GroupProject[] = [
       { id: 2003, type: "upload", user: "Eve", content: "Added initial packet loss test scripts.", date: "April 29, 2026", time: "01:15 PM", file: { name: "test_loss.py", size: "3 KB", type: "Python Script" } },
     ],
     tasks: [
-      { id: 6, title: "Write UDP Wrapper", status: "done", assigneeId: "u4" },
-      { id: 7, title: "Implement Sliding Window", status: "in-progress", assigneeId: "u5" },
-      { id: 8, title: "Create test cases for 20% packet loss", status: "todo", assigneeId: "u6" },
-      { id: 9, title: "Handle out-of-order packets", status: "todo", assigneeId: "u4" },
+      { id: 6, title: "Write UDP Wrapper", about: "Build the transport wrapper that normalizes packet send and receive behavior.", deadline: "2026-05-03", status: "done", assigneeId: "u4" },
+      { id: 7, title: "Implement Sliding Window", about: "Add windowing logic for reliable delivery and retransmission tracking.", deadline: "2026-05-07", status: "in-progress", assigneeId: "u5" },
+      { id: 8, title: "Create test cases for 20% packet loss", about: "Cover packet loss behavior, retries, and recovery edge cases.", deadline: "2026-05-09", status: "todo", assigneeId: "u6" },
+      { id: 9, title: "Handle out-of-order packets", about: "Buffer and reorder packets before handing data to the application layer.", deadline: "2026-05-11", status: "todo", assigneeId: "u4" },
     ]
   },
 ];
