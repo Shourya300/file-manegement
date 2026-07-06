@@ -4,9 +4,10 @@ type HeaderProps = {
   title: string;
   showBackButton?: boolean;
   onBack?: () => void;
+  userName?: string | null;
 };
 
-export default function Header({ title, showBackButton, onBack }: HeaderProps) {
+export default function Header({ title, showBackButton, onBack, userName }: HeaderProps) {
   return (
     <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 lg:px-10 sticky top-0 z-10 shrink-0 transition-colors shadow-[0_1px_0_rgba(15,23,42,0.04)]">
       <div className="flex items-center gap-4">
@@ -41,7 +42,7 @@ export default function Header({ title, showBackButton, onBack }: HeaderProps) {
           <span className="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-500 to-cyan-500 text-white flex items-center justify-center shadow-sm overflow-hidden">
             <UserCircle2 size={22} />
           </span>
-          <span className="hidden lg:block text-sm font-semibold text-slate-700">John Doe</span>
+          <span className="hidden lg:block text-sm font-semibold text-slate-700">{userName || "User"}</span>
         </button>
       </div>
     </header>
