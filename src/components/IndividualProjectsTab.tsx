@@ -1,12 +1,40 @@
-import { FolderOpen, Clock, CheckCircle2, MoreVertical, Calendar, Upload } from "lucide-react";
-import { individualProjects, IndividualProject } from "../lib/data";
+"use client";
+import {
+  FolderOpen,
+  Clock,
+  CheckCircle2,
+  MoreVertical,
+  Calendar,
+  Upload,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 
-type Props = {
-  projects?: IndividualProject[];
-  onSelectProject: (id: number) => void;
+type Assignment = {
+  _id: string;
+  title: string;
+  description: string;
+  subject: string;
+  dueDate: string;
+  status: string;
 };
 
-export default function IndividualProjectsTab({ projects = individualProjects, onSelectProject }: Props) {
+type Props = {
+  onSelectProject: (id: string) => void;
+};
+
+export default function IndividualProjectsTab({ onSelectProject }: Props) {
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+
+  useEffect(() => {
+    fetchAssignments();
+  }, []);
+
+  const fetchAssignments = async () => {
+    const res = await fetch("/api/assignments");
+    const data = await res.json();
+
+    setAssignments(data);
+  };
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Stats Row */}
@@ -16,7 +44,9 @@ export default function IndividualProjectsTab({ projects = individualProjects, o
             <FolderOpen size={24} />
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500">Active Projects</p>
+            <p className="text-sm font-medium text-slate-500">
+              Active Projects
+            </p>
             <p className="text-2xl font-bold text-slate-800">3</p>
           </div>
         </div>
@@ -25,7 +55,9 @@ export default function IndividualProjectsTab({ projects = individualProjects, o
             <Clock size={24} />
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500">Upcoming Deadlines</p>
+            <p className="text-sm font-medium text-slate-500">
+              Upcoming Deadlines
+            </p>
             <p className="text-2xl font-bold text-slate-800">2</p>
           </div>
         </div>
@@ -48,71 +80,58 @@ export default function IndividualProjectsTab({ projects = individualProjects, o
           </button>
         </div>
         <div className="divide-y divide-slate-100">
-          {projects.map((project) => (
-            <div 
-              key={project.id} 
+          {assignments.map((assignment) => (
+            <div
+              key={assignment._id}
               className="p-6 hover:bg-slate-50/50 transition-colors group cursor-pointer"
-              onClick={() => onSelectProject(project.id)}
+              onClick={() => onSelectProject(assignment._id)}
             >
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div className="flex-1 space-y-3">
                   <div className="flex items-start justify-between">
                     <div>
                       <span className="inline-block px-2.5 py-1 bg-indigo-50 text-indigo-700 text-xs font-semibold rounded-md mb-2 transition-colors">
-                        {project.course}
+                        {assignment.subject}
                       </span>
                       <h3 className="text-lg font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors">
-                        {project.title}
+                        {assignment.title}
                       </h3>
                     </div>
-                    <button 
+
+                    <button
                       className="text-slate-400 hover:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => { e.stopPropagation(); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                      }}
                     >
                       <MoreVertical size={20} />
                     </button>
                   </div>
-                  
+                  <p className="text-sm text-slate-500 mt-2">
+                    {assignment.description}
+                  </p>
+
                   <div className="flex flex-wrap items-center gap-y-2 gap-x-6 text-sm text-slate-500">
                     <div className="flex items-center gap-1.5">
                       <Calendar size={16} className="text-slate-400" />
-                      <span>Due: <span className="font-medium text-slate-700">{project.dueDate}</span></span>
+                      <span>
+                        Due:{" "}
+                        <span className="font-medium text-slate-700">
+                          {new Date(assignment.dueDate).toLocaleDateString()}
+                        </span>
+                      </span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <span className={`w-2 h-2 rounded-full ${
-                        project.status === 'Completed' ? 'bg-emerald-500' :
-                        project.status === 'In Progress' ? 'bg-amber-500' : 'bg-slate-300'
-                      }`}></span>
-                      <span>{project.status}</span>
-                    </div>
-                  </div>
-
-                  {/* Progress bar */}
-                  <div className="w-full max-w-md pt-2">
-                    <div className="flex justify-between text-xs font-medium text-slate-500 mb-1">
-                      <span>Progress</span>
-                      <span>{project.progress}%</span>
-                    </div>
-                    <div className="w-full bg-slate-100 rounded-full h-1.5">
-                      <div 
-                        className={`h-1.5 rounded-full ${
-                          project.progress === 100 ? 'bg-emerald-500' : 'bg-indigo-500'
+                      <span
+                        className={`w-2 h-2 rounded-full ${
+                          assignment.status === "Completed"
+                            ? "bg-emerald-500"
+                            : assignment.status === "In Progress"
+                              ? "bg-amber-500"
+                              : "bg-slate-300"
                         }`}
-                        style={{ width: `${project.progress}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="lg:w-80 bg-slate-50 rounded-xl p-4 border border-slate-100 group-hover:bg-white transition-colors">
-                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Recent Update</h4>
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 shadow-sm shrink-0 transition-colors">
-                      {project.status === 'Completed' ? <CheckCircle2 size={16} className="text-emerald-500" /> : <Upload size={16} />}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-slate-800">{project.recentUpdate}</p>
-                      <p className="text-xs text-slate-500 mt-0.5">{project.updateTime}</p>
+                      ></span>
+                      <span>{assignment.status}</span>
                     </div>
                   </div>
                 </div>
