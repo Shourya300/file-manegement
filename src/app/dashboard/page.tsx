@@ -65,6 +65,52 @@ export default function DashboardPage() {
     );
   };
 
+  const handleAssignmentSave = (assignment: Assignment) => {
+    upsertAssignment(assignment);
+    setSelectedAssignment(assignment);
+    setEditingAssignment(null);
+    setIsAddAssignmentOpen(false);
+  };
+
+  const updateAssignmentStatus = async (
+    assignment: Assignment,
+    nextStatus: Assignment["status"],
+  ) => {
+    const response = await fetch(`/api/assignments/${assignment._id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ...assignment,
+        status: nextStatus,
+      }),
+    });
+
+    const result = (await response.json()) as {
+      message?: string;
+      error?: string;
+      assignment?: Assignment;
+    };
+
+    if (!response.ok) {
+      throw new Error(
+        result.error || result.message || "Unable to update assignment status.",
+      );
+    }
+
+    if (result.assignment) {
+      upsertAssignment(result.assignment);
+      return;
+    }
+
+    upsertAssignment({
+      ...assignment,
+      status: nextStatus,
+      updatedAt: new Date().toISOString(),
+    });
+  };
+
   const removeAssignment = (assignmentId: string) => {
     setAssignments((currentAssignments) =>
       currentAssignments.filter(
@@ -77,6 +123,44 @@ export default function DashboardPage() {
         ? null
         : currentSelectedAssignment,
     );
+
+    setEditingAssignment((currentEditingAssignment) =>
+      currentEditingAssignment && currentEditingAssignment._id === assignmentId
+        ? null
+        : currentEditingAssignment,
+    );
+    setIsAddAssignmentOpen((currentOpen) =>
+      currentOpen && editingAssignment?._id === assignmentId ? false : currentOpen,
+    );
+  };
+
+  const deleteAssignment = async (assignment: Assignment) => {
+    const shouldDelete = window.confirm(
+      `Delete \"${assignment.title}\"? This cannot be undone.`,
+    );
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/assignments/${assignment._id}`, {
+        method: "DELETE",
+      });
+
+      const result = (await response.json()) as { error?: string };
+
+      if (!response.ok) {
+        throw new Error(result.error || "Unable to delete assignment.");
+      }
+
+      removeAssignment(assignment._id);
+      setSelectedAssignment(null);
+      setEditingAssignment(null);
+      setIsAddAssignmentOpen(false);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const handleTabChange = (tab: string) => {
@@ -161,9 +245,10 @@ export default function DashboardPage() {
                     setIsAddAssignmentOpen(true);
                     setSelectedAssignment(assignment);
                   }}
-                  onDelete={(id) => {
-                    removeAssignment(id);
+                  onDelete={(assignment) => {
+                    void deleteAssignment(assignment);
                   }}
+                  onStatusChange={updateAssignmentStatus}
                 />
               ) : (
                 <div className="space-y-8">
@@ -193,11 +278,7 @@ export default function DashboardPage() {
                   {isAddAssignmentOpen ? (
                     <AddAssignmentForm
                       assignment={editingAssignment}
-                      onAssignmentAdded={(assignment) => {
-                        upsertAssignment(assignment);
-                        setIsAddAssignmentOpen(false);
-                        setEditingAssignment(null);
-                      }}
+                      onAssignmentAdded={handleAssignmentSave}
                     />
                   ) : null}
 
@@ -233,11 +314,7 @@ export default function DashboardPage() {
             >
               <AddAssignmentForm
                 assignment={editingAssignment}
-                onAssignmentAdded={(assignment) => {
-                  upsertAssignment(assignment);
-                  setIsAddAssignmentOpen(false);
-                  setEditingAssignment(null);
-                }}
+                onAssignmentAdded={handleAssignmentSave}
               />
             </Modal>
           ) : null}

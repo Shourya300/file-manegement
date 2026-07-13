@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Assignment } from "./assignmentTypes";
 import {
   CalendarDays,
@@ -15,7 +16,11 @@ import {
 type Props = {
   assignment: Assignment;
   onEdit: (assignment: Assignment) => void;
-  onDelete: (id: string) => void;
+  onDelete: (assignment: Assignment) => void;
+  onStatusChange: (
+    assignment: Assignment,
+    status: Assignment["status"],
+  ) => Promise<void> | void;
 };
 
 const formatDate = (value?: string | Date) => {
@@ -43,14 +48,56 @@ const getStatusStyles = (status: Assignment["status"]) => {
   }
 };
 
+const statusOptions: Assignment["status"][] = [
+  "To Do",
+  "In Progress",
+  "Completed",
+];
+
 export default function AssignmentDetailView({
-    assignment,
-    onEdit,
-    onDelete,
+  assignment,
+  onEdit,
+  onDelete,
+  onStatusChange,
 }: Props) {
+  const [currentStatus, setCurrentStatus] = useState(assignment.status);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [statusError, setStatusError] = useState("");
+
+  useEffect(() => {
+    setCurrentStatus(assignment.status);
+    setStatusError("");
+  }, [assignment.status, assignment._id]);
+
   const createdAt = formatDate(assignment.createdAt);
   const updatedAt = formatDate(assignment.updatedAt);
   const dueDate = formatDate(assignment.dueDate);
+
+  const handleStatusChange = async (
+    event: React.ChangeEvent<HTMLSelectElement>,
+  ) => {
+    const nextStatus = event.target.value as Assignment["status"];
+
+    if (nextStatus === currentStatus) {
+      return;
+    }
+
+    const previousStatus = currentStatus;
+    setCurrentStatus(nextStatus);
+    setStatusError("");
+    setIsUpdatingStatus(true);
+
+    try {
+      await onStatusChange(assignment, nextStatus);
+    } catch (error) {
+      setCurrentStatus(previousStatus);
+      setStatusError(
+        error instanceof Error ? error.message : "Unable to update status.",
+      );
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
 
   const timelineItems = [
     {
@@ -85,10 +132,10 @@ export default function AssignmentDetailView({
                   </span>
                   <span
                     className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset ${getStatusStyles(
-                      assignment.status,
+                      currentStatus,
                     )}`}
                   >
-                    {assignment.status}
+                    {currentStatus}
                   </span>
                 </div>
 
@@ -219,7 +266,30 @@ export default function AssignmentDetailView({
                   Status
                 </dt>
                 <dd className="mt-2 text-sm font-medium text-slate-900">
-                  {assignment.status}
+                  {currentStatus}
+                </dd>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  Update Status
+                </dt>
+                <dd className="mt-3">
+                  <select
+                    value={currentStatus}
+                    onChange={handleStatusChange}
+                    disabled={isUpdatingStatus}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+                    aria-label="Update assignment status"
+                  >
+                    {statusOptions.map((status) => (
+                      <option key={status} value={status}>
+                        {status}
+                      </option>
+                    ))}
+                  </select>
+                  {statusError ? (
+                    <p className="mt-2 text-sm text-rose-600">{statusError}</p>
+                  ) : null}
                 </dd>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
@@ -245,9 +315,6 @@ export default function AssignmentDetailView({
             <div className="mb-5 flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold text-slate-900">Quick Actions</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  UI only. Hook actions up later.
-                </p>
               </div>
               <div className="rounded-full bg-slate-100 p-2 text-slate-400">
                 <WandSparkles size={16} />
@@ -266,18 +333,16 @@ export default function AssignmentDetailView({
               </button>
               <button
                 type="button"
-                onClick={() => onDelete(assignment._id)}
+                onClick={() => onDelete(assignment)}
                 className="flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
               >
                 <Trash2 size={16} />
                 Delete Assignment
               </button>
-              <button
-                type="button"
-                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-semibold text-sky-700 transition hover:bg-sky-100"
-              >
-                Change Status
-              </button>
+              <p className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-slate-600">
+                Use the status dropdown in the assignment information panel to
+                update progress.
+              </p>
             </div>
           </article>
 

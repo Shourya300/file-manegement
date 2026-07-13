@@ -103,6 +103,7 @@ export default function AddAssignmentForm({
         message?: string;
         error?: string;
         id?: string;
+        assignment?: Assignment;
       };
 
       if (!response.ok) {
@@ -115,7 +116,7 @@ export default function AddAssignmentForm({
       setSuccessMessage(result.message || "Assignment saved successfully.");
 
       const savedAssignment: Assignment = assignment
-        ? {
+        ? result.assignment || {
             ...assignment,
             ...formData,
             dueDate: formData.dueDate,
