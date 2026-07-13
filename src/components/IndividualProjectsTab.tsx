@@ -1,76 +1,56 @@
 "use client";
 import {
-  FolderOpen,
-  Clock,
-  CheckCircle2,
   MoreVertical,
   Calendar,
-  Upload,
 } from "lucide-react";
-import { useEffect, useState } from "react";
-
-type Assignment = {
-  _id: string;
-  title: string;
-  description: string;
-  subject: string;
-  dueDate: string;
-  status: string;
-};
+import { useState } from "react";
+import { Assignment } from "./assignmentTypes";
 
 type Props = {
-  onSelectProject: (id: string) => void;
+  assignments: Assignment[];
+  onSelectProject: (assignment: Assignment) => void;
+  onEdit: (assignment: Assignment) => void;
+  onDelete: (assignmentId: string) => void;
 };
 
-export default function IndividualProjectsTab({ onSelectProject }: Props) {
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
+export default function IndividualProjectsTab({
+  assignments,
+  onSelectProject,
+  onEdit,
+  onDelete,
+}: Props) {
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchAssignments();
-  }, []);
+  const handleDeleteAssignment = async (assignmentId: string) => {
+    const confirmDelete = window.confirm(
+      "Delete this assignment? This action cannot be undone.",
+    );
 
-  const fetchAssignments = async () => {
-    const res = await fetch("/api/assignments");
-    const data = await res.json();
+    if (!confirmDelete) {
+      return;
+    }
 
-    setAssignments(data);
+    try {
+      const response = await fetch(`/api/assignments/${assignmentId}`, {
+        method: "DELETE",
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Unable to delete assignment.");
+      }
+
+      onDelete(assignmentId);
+      setOpenMenuId(null);
+    } catch (error) {
+      alert(
+        error instanceof Error ? error.message : "Unable to delete assignment.",
+      );
+    }
   };
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Stats Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4 transition-colors">
-          <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
-            <FolderOpen size={24} />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-slate-500">
-              Active Projects
-            </p>
-            <p className="text-2xl font-bold text-slate-800">3</p>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4 transition-colors">
-          <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center">
-            <Clock size={24} />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-slate-500">
-              Upcoming Deadlines
-            </p>
-            <p className="text-2xl font-bold text-slate-800">2</p>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4 transition-colors">
-          <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
-            <CheckCircle2 size={24} />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-slate-500">Completed</p>
-            <p className="text-2xl font-bold text-slate-800">12</p>
-          </div>
-        </div>
-      </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden transition-colors">
         <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
@@ -83,8 +63,8 @@ export default function IndividualProjectsTab({ onSelectProject }: Props) {
           {assignments.map((assignment) => (
             <div
               key={assignment._id}
-              className="p-6 hover:bg-slate-50/50 transition-colors group cursor-pointer"
-              onClick={() => onSelectProject(assignment._id)}
+              className="relative p-6 hover:bg-slate-50/50 transition-colors group cursor-pointer"
+              onClick={() => onSelectProject(assignment)}
             >
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div className="flex-1 space-y-3">
@@ -99,13 +79,44 @@ export default function IndividualProjectsTab({ onSelectProject }: Props) {
                     </div>
 
                     <button
+                      type="button"
                       className="text-slate-400 hover:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={(e) => {
                         e.stopPropagation();
+                        setOpenMenuId((currentMenuId: string | null) =>
+                          currentMenuId === assignment._id
+                            ? null
+                            : assignment._id,
+                        );
                       }}
                     >
                       <MoreVertical size={20} />
                     </button>
+
+                    {openMenuId === assignment._id ? (
+                      <div
+                        className="absolute right-6 top-14 z-10 w-44 rounded-xl border border-slate-200 bg-white p-2 shadow-xl"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <button
+                          type="button"
+                          className="flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+                          onClick={() => {
+                            onEdit(assignment);
+                            setOpenMenuId(null);
+                          }}
+                        >
+                          Edit Assignment
+                        </button>
+                        <button
+                          type="button"
+                          className="flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium text-rose-600 transition-colors hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                          onClick={() => handleDeleteAssignment(assignment._id)}
+                        >
+                          Delete Assignment
+                        </button>
+                      </div>
+                    ) : null}
                   </div>
                   <p className="text-sm text-slate-500 mt-2">
                     {assignment.description}

@@ -1,17 +1,29 @@
 import clientPromise from "@/lib/mongodb";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../auth/[...nextauth]/route";
 
 export async function GET() {
+  const session = await getServerSession(authOptions);
+
+if (!session?.user?.email) {
+  return Response.json(
+    { error: "Unauthorized" },
+    { status: 401 }
+  );
+}
   const client = await clientPromise;
   const db = client.db("StudentDash");
 
   const assignmentsCollection = db.collection("assignments");
 
-  const assignments = await assignmentsCollection
-    .find({})
-    .sort({ createdAt: -1 })
-    .toArray();
+const assignments = await assignmentsCollection
+  .find({
+  userEmail: session.user.email,
+})
+  .sort({ dueDate: 1 })
+  .toArray();
 
-  return Response.json(assignments);
+  return Response.json(assignments); 
 }
 
 export async function POST(request: Request) {
@@ -22,11 +34,21 @@ if (!body.title || !body.description || !body.subject || !body.dueDate) {
     { status: 400 }
   );
 }
+const session = await getServerSession(authOptions);
+
+if (!session?.user?.email) {
+  return Response.json(
+    { error: "Unauthorized" },
+    { status: 401 }
+  );
+}
   const client = await clientPromise;
   const db = client.db("StudentDash");
   const assignmentsCollection = db.collection("assignments");
 
   const result = await assignmentsCollection.insertOne({
+    userEmail: session.user.email,
+
     title: body.title,
     description: body.description,
     subject: body.subject,
@@ -34,7 +56,7 @@ if (!body.title || !body.description || !body.subject || !body.dueDate) {
     status: "To Do",
     createdAt: new Date(),
     updatedAt: new Date(),
-  });
+});
 
   return Response.json(
   {

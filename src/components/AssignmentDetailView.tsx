@@ -1,0 +1,309 @@
+"use client";
+
+import { Assignment } from "./assignmentTypes";
+import {
+  CalendarDays,
+  Clock3,
+  FileText,
+  MoreVertical,
+  Paperclip,
+  PencilLine,
+  Trash2,
+  WandSparkles,
+} from "lucide-react";
+
+type Props = {
+  assignment: Assignment;
+  onEdit: (assignment: Assignment) => void;
+  onDelete: (id: string) => void;
+};
+
+const formatDate = (value?: string | Date) => {
+  if (!value) return "Not available";
+
+  const date = value instanceof Date ? value : new Date(value);
+
+  if (Number.isNaN(date.getTime())) return "Not available";
+
+  return date.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
+const getStatusStyles = (status: Assignment["status"]) => {
+  switch (status) {
+    case "Completed":
+      return "bg-emerald-50 text-emerald-700 ring-emerald-100";
+    case "In Progress":
+      return "bg-amber-50 text-amber-700 ring-amber-100";
+    default:
+      return "bg-slate-100 text-slate-700 ring-slate-200";
+  }
+};
+
+export default function AssignmentDetailView({
+    assignment,
+    onEdit,
+    onDelete,
+}: Props) {
+  const createdAt = formatDate(assignment.createdAt);
+  const updatedAt = formatDate(assignment.updatedAt);
+  const dueDate = formatDate(assignment.dueDate);
+
+  const timelineItems = [
+    {
+      title: "Assignment created",
+      detail: "Placeholder event for the future activity stream.",
+      time: createdAt,
+    },
+    {
+      title: "Status review",
+      detail: "Placeholder event showing a later status change.",
+      time: "Recent",
+    },
+    {
+      title: "File upload",
+      detail: "Placeholder event for a future Drive attachment.",
+      time: "Later",
+    },
+  ];
+
+  return (
+    <section className="space-y-6">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(320px,3fr)]">
+        <div className="space-y-6">
+          <header className="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.12)] sm:p-8">
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-500 via-cyan-500 to-emerald-500" />
+
+            <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="inline-flex items-center rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-sky-700 ring-1 ring-inset ring-sky-100">
+                    {assignment.subject}
+                  </span>
+                  <span
+                    className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset ${getStatusStyles(
+                      assignment.status,
+                    )}`}
+                  >
+                    {assignment.status}
+                  </span>
+                </div>
+
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
+                    Individual Assignment
+                  </p>
+                  <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
+                    {assignment.title}
+                  </h1>
+                  <p className="mt-3 flex flex-wrap items-center gap-4 text-sm text-slate-500">
+                    <span className="inline-flex items-center gap-1.5">
+                      <CalendarDays size={15} className="text-slate-400" />
+                      Due {dueDate}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <Clock3 size={15} className="text-slate-400" />
+                      Created {createdAt}
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 self-start rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-500">
+                <MoreVertical size={16} />
+                Detail view
+              </div>
+            </div>
+          </header>
+
+          <article className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+            <div className="mb-4 flex items-center gap-2">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-950 text-white shadow-lg shadow-slate-950/15">
+                <FileText size={18} />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">Description</h2>
+                <p className="text-sm text-slate-500">Full assignment details</p>
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-5 text-sm leading-7 text-slate-600 sm:p-6 sm:text-[15px]">
+              {assignment.description}
+            </div>
+          </article>
+
+          <article className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+            <div className="mb-6 flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">Activity</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Placeholder timeline for future assignment history.
+                </p>
+              </div>
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                Timeline
+              </span>
+            </div>
+
+            {/* TODO: Replace this placeholder timeline with file uploads, status changes, assignment edits, and Google Drive activity. */}
+            <div className="relative pl-4">
+              <div className="absolute left-[13px] top-2 bottom-2 w-px bg-slate-200" />
+
+              <div className="space-y-5">
+                {timelineItems.map((item, index) => (
+                  <div key={item.title} className="relative flex gap-4">
+                    <div className="relative z-10 mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm">
+                      <div className="h-2.5 w-2.5 rounded-full bg-slate-400" />
+                    </div>
+
+                    <div className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                      <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <h3 className="text-sm font-semibold text-slate-900">
+                            {item.title}
+                          </h3>
+                          <p className="mt-1 text-sm text-slate-500">
+                            {item.detail}
+                          </p>
+                        </div>
+                        <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">
+                          {item.time}
+                        </span>
+                      </div>
+                      {index < timelineItems.length - 1 ? (
+                        <div className="mt-4 h-px w-full bg-slate-200" />
+                      ) : null}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <aside className="space-y-6">
+          <article className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-7">
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">
+                  Assignment Information
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Key dates and status at a glance.
+                </p>
+              </div>
+            </div>
+
+            <dl className="space-y-4">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  Subject
+                </dt>
+                <dd className="mt-2 text-sm font-medium text-slate-900">
+                  {assignment.subject}
+                </dd>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  Due Date
+                </dt>
+                <dd className="mt-2 text-sm font-medium text-slate-900">
+                  {dueDate}
+                </dd>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  Status
+                </dt>
+                <dd className="mt-2 text-sm font-medium text-slate-900">
+                  {assignment.status}
+                </dd>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  Created At
+                </dt>
+                <dd className="mt-2 text-sm font-medium text-slate-900">
+                  {createdAt}
+                </dd>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  Last Updated
+                </dt>
+                <dd className="mt-2 text-sm font-medium text-slate-900">
+                  {updatedAt}
+                </dd>
+              </div>
+            </dl>
+          </article>
+
+          <article className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-7">
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">Quick Actions</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  UI only. Hook actions up later.
+                </p>
+              </div>
+              <div className="rounded-full bg-slate-100 p-2 text-slate-400">
+                <WandSparkles size={16} />
+              </div>
+            </div>
+
+            {/* TODO: Wire edit, delete, and status changes to the assignment workflow later. */}
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={() => onEdit(assignment)}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-950/15 transition hover:-translate-y-0.5 hover:bg-slate-800"
+              >
+                <PencilLine size={16} />
+                Edit Assignment
+              </button>
+              <button
+                type="button"
+                onClick={() => onDelete(assignment._id)}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+              >
+                <Trash2 size={16} />
+                Delete Assignment
+              </button>
+              <button
+                type="button"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-semibold text-sky-700 transition hover:bg-sky-100"
+              >
+                Change Status
+              </button>
+            </div>
+          </article>
+
+          <article className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-7">
+            <div className="mb-5 flex items-center gap-2">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-950 text-white shadow-lg shadow-slate-950/15">
+                <Paperclip size={18} />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">Files</h2>
+                <p className="mt-1 text-sm text-slate-500">Uploaded attachments</p>
+              </div>
+            </div>
+
+            {/* TODO: Integrate this section with Google Drive file attachments later. */}
+            <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50/70 px-5 py-10 text-center">
+              <p className="text-sm font-medium text-slate-700">
+                No files uploaded yet.
+              </p>
+              <p className="mt-2 text-sm text-slate-500">
+                Files will appear here once attachments are added.
+              </p>
+            </div>
+          </article>
+        </aside>
+      </div>
+    </section>
+  );
+}

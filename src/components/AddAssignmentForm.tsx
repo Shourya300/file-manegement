@@ -1,7 +1,8 @@
 "use client";
 
-import { FormEvent, useState } from "react";
 import { CheckCircle2, Loader2, PlusCircle, TriangleAlert } from "lucide-react";
+import { FormEvent, useEffect, useState } from "react";
+import { Assignment } from "./assignmentTypes";
 
 type FormState = {
   title: string;
@@ -11,6 +12,10 @@ type FormState = {
 };
 
 type FormErrors = Partial<Record<keyof FormState, string>>;
+type Props = {
+  assignment: Assignment | null;
+  onAssignmentAdded: (assignment: Assignment) => void;
+};
 
 const initialFormState: FormState = {
   title: "",
@@ -19,11 +24,9 @@ const initialFormState: FormState = {
   dueDate: "",
 };
 
-type Props = {
-  onAssignmentAdded: () => void;
-};
 
 export default function AddAssignmentForm({
+  assignment,
   onAssignmentAdded,
 }: Props) {
   const [formData, setFormData] = useState<FormState>(initialFormState);
@@ -31,6 +34,20 @@ export default function AddAssignmentForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [apiError, setApiError] = useState("");
+
+  useEffect(() => {
+    if (assignment) {
+      setFormData({
+        title: assignment.title,
+        subject: assignment.subject,
+        description: assignment.description,
+        dueDate: assignment.dueDate.slice(0, 10),
+      });
+      return;
+    }
+
+    setFormData(initialFormState);
+  }, [assignment]);
 
   const handleChange = (
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -49,7 +66,8 @@ export default function AddAssignmentForm({
 
     if (!formData.title.trim()) nextErrors.title = "Title is required.";
     if (!formData.subject.trim()) nextErrors.subject = "Subject is required.";
-    if (!formData.description.trim()) nextErrors.description = "Description is required.";
+    if (!formData.description.trim())
+      nextErrors.description = "Description is required.";
     if (!formData.dueDate) nextErrors.dueDate = "Due date is required.";
 
     return nextErrors;
@@ -70,29 +88,55 @@ export default function AddAssignmentForm({
     setSuccessMessage("");
 
     try {
-      // Submit the assignment as JSON to the existing API route.
-      const response = await fetch("/api/assignments", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        assignment ? `/api/assignments/${assignment._id}` : "/api/assignments",
+        {
+          method: assignment ? "PUT" : "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
         },
-        body: JSON.stringify(formData),
-      });
+      );
 
       const result = (await response.json()) as {
         message?: string;
         error?: string;
+        id?: string;
       };
 
       if (!response.ok) {
-        throw new Error(result.error || result.message || "Unable to save assignment.");
+        throw new Error(
+          result.error || result.message || "Unable to save assignment.",
+        );
       }
 
       setFormData(initialFormState);
       setSuccessMessage(result.message || "Assignment saved successfully.");
-      onAssignmentAdded();
+
+      const savedAssignment: Assignment = assignment
+        ? {
+            ...assignment,
+            ...formData,
+            dueDate: formData.dueDate,
+            updatedAt: new Date().toISOString(),
+          }
+        : {
+            _id: result.id || "",
+            title: formData.title,
+            subject: formData.subject,
+            description: formData.description,
+            dueDate: formData.dueDate,
+            status: "To Do",
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+
+      onAssignmentAdded(savedAssignment);
     } catch (error) {
-      setApiError(error instanceof Error ? error.message : "Unable to save assignment.");
+      setApiError(
+        error instanceof Error ? error.message : "Unable to save assignment.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -110,10 +154,12 @@ export default function AddAssignmentForm({
                 Individual assignment
               </p>
               <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
-                Add Assignment
+                {assignment ? "Edit Assignment" : "Add Assignment"}
               </h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
-                Capture a single assignment with its subject, deadline, and supporting details.
+                {assignment
+                  ? "Update the subject, deadline, and supporting details for this assignment."
+                  : "Capture a single assignment with its subject, deadline, and supporting details."}
               </p>
             </div>
 
@@ -126,7 +172,9 @@ export default function AddAssignmentForm({
         <form onSubmit={handleSubmit} className="px-6 py-6 sm:px-8 sm:py-8">
           <div className="grid gap-5 md:grid-cols-2">
             <label className="block md:col-span-1">
-              <span className="mb-2 block text-sm font-medium text-slate-700">Title</span>
+              <span className="mb-2 block text-sm font-medium text-slate-700">
+                Title
+              </span>
               <input
                 name="title"
                 type="text"
@@ -139,11 +187,15 @@ export default function AddAssignmentForm({
                     : "border-slate-200 focus:border-sky-400 focus:ring-sky-100"
                 }`}
               />
-              {errors.title ? <p className="mt-2 text-sm text-rose-600">{errors.title}</p> : null}
+              {errors.title ? (
+                <p className="mt-2 text-sm text-rose-600">{errors.title}</p>
+              ) : null}
             </label>
 
             <label className="block md:col-span-1">
-              <span className="mb-2 block text-sm font-medium text-slate-700">Subject</span>
+              <span className="mb-2 block text-sm font-medium text-slate-700">
+                Subject
+              </span>
               <input
                 name="subject"
                 type="text"
@@ -156,11 +208,15 @@ export default function AddAssignmentForm({
                     : "border-slate-200 focus:border-sky-400 focus:ring-sky-100"
                 }`}
               />
-              {errors.subject ? <p className="mt-2 text-sm text-rose-600">{errors.subject}</p> : null}
+              {errors.subject ? (
+                <p className="mt-2 text-sm text-rose-600">{errors.subject}</p>
+              ) : null}
             </label>
 
             <label className="block md:col-span-2">
-              <span className="mb-2 block text-sm font-medium text-slate-700">Description</span>
+              <span className="mb-2 block text-sm font-medium text-slate-700">
+                Description
+              </span>
               <textarea
                 name="description"
                 value={formData.description}
@@ -173,11 +229,17 @@ export default function AddAssignmentForm({
                     : "border-slate-200 focus:border-sky-400 focus:ring-sky-100"
                 }`}
               />
-              {errors.description ? <p className="mt-2 text-sm text-rose-600">{errors.description}</p> : null}
+              {errors.description ? (
+                <p className="mt-2 text-sm text-rose-600">
+                  {errors.description}
+                </p>
+              ) : null}
             </label>
 
             <label className="block md:col-span-1">
-              <span className="mb-2 block text-sm font-medium text-slate-700">Due Date</span>
+              <span className="mb-2 block text-sm font-medium text-slate-700">
+                Due Date
+              </span>
               <input
                 name="dueDate"
                 type="date"
@@ -189,7 +251,9 @@ export default function AddAssignmentForm({
                     : "border-slate-200 focus:border-sky-400 focus:ring-sky-100"
                 }`}
               />
-              {errors.dueDate ? <p className="mt-2 text-sm text-rose-600">{errors.dueDate}</p> : null}
+              {errors.dueDate ? (
+                <p className="mt-2 text-sm text-rose-600">{errors.dueDate}</p>
+              ) : null}
             </label>
           </div>
 
@@ -214,8 +278,16 @@ export default function AddAssignmentForm({
               disabled={isSubmitting}
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-950/15 transition hover:-translate-y-0.5 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
             >
-              {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : null}
-              {isSubmitting ? "Saving..." : "Save Assignment"}
+              {isSubmitting ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : null}
+              {isSubmitting
+                ? assignment
+                  ? "Updating..."
+                  : "Saving..."
+                : assignment
+                  ? "Update Assignment"
+                  : "Save Assignment"}
             </button>
           </div>
         </form>

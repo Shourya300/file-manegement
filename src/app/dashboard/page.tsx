@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import IndividualProjectsTab from "../../components/IndividualProjectsTab";
@@ -8,27 +8,83 @@ import AddAssignmentForm from "../../components/AddAssignmentForm";
 import GroupProjectsTab from "../../components/GroupProjectsTab";
 import ProjectDetailView from "../../components/ProjectDetailView";
 import GroupProjectDetailView from "../../components/GroupProjectDetailView";
+import AssignmentDetailView from "../../components/AssignmentDetailView";
 import CalendarView from "../../components/CalendarView";
 import { useSession } from "next-auth/react";
 import { groupProjects } from "../../lib/data";
+import { Assignment } from "../../components/assignmentTypes";
+import Modal from "../../components/Modals";
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState("individual");
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(
-    null,
-  );
+  const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
+  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [selectedGroupProjectId, setSelectedGroupProjectId] = useState<
     number | null
   >(null);
   const [gProjects, setGProjects] = useState(groupProjects);
   const [isAddAssignmentOpen, setIsAddAssignmentOpen] = useState(false);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [isLoadingAssignments, setIsLoadingAssignments] = useState(false);
+
+  useEffect(() => {
+    const loadAssignments = async () => {
+      try {
+        setIsLoadingAssignments(true);
+        const response = await fetch("/api/assignments");
+        const data = (await response.json()) as Assignment[];
+
+        setAssignments(data);
+      } finally {
+        setIsLoadingAssignments(false);
+      }
+    };
+
+    loadAssignments();
+  }, []);
+
+  const upsertAssignment = (assignment: Assignment) => {
+    setAssignments((currentAssignments) => {
+      const exists = currentAssignments.some(
+        (currentAssignment) => currentAssignment._id === assignment._id,
+      );
+
+      return exists
+        ? currentAssignments.map((currentAssignment) =>
+            currentAssignment._id === assignment._id
+              ? assignment
+              : currentAssignment,
+          )
+        : [assignment, ...currentAssignments];
+    });
+
+    setSelectedAssignment((currentSelectedAssignment) =>
+      currentSelectedAssignment && currentSelectedAssignment._id === assignment._id
+        ? assignment
+        : currentSelectedAssignment,
+    );
+  };
+
+  const removeAssignment = (assignmentId: string) => {
+    setAssignments((currentAssignments) =>
+      currentAssignments.filter(
+        (currentAssignment) => currentAssignment._id !== assignmentId,
+      ),
+    );
+
+    setSelectedAssignment((currentSelectedAssignment) =>
+      currentSelectedAssignment && currentSelectedAssignment._id === assignmentId
+        ? null
+        : currentSelectedAssignment,
+    );
+  };
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
-    setSelectedProjectId(null);
+    setSelectedAssignment(null);
     setSelectedGroupProjectId(null);
     setIsAddAssignmentOpen(false);
+    setEditingAssignment(null);
   };
 
   const handleSelectProjectFromCalendar = (
@@ -37,18 +93,22 @@ export default function DashboardPage() {
   ) => {
     setActiveTab(type);
     if (type === "individual") {
-      setSelectedProjectId(id);
+      const matchingAssignment = assignments.find(
+        (assignment) => assignment._id === String(id),
+      );
+
+      setSelectedAssignment(matchingAssignment || null);
       setSelectedGroupProjectId(null);
     } else {
       setSelectedGroupProjectId(id);
-      setSelectedProjectId(null);
+      setSelectedAssignment(null);
     }
   };
 
   const getHeaderTitle = () => {
-    if (activeTab === "individual" && selectedProjectId) {
-  return "Assignment Details";
-}
+    if (activeTab === "individual" && selectedAssignment) {
+      return "Assignment Details";
+    }
     if (activeTab === "group" && selectedGroupProjectId) {
       const project = gProjects.find((p) => p.id === selectedGroupProjectId);
       return project ? project.title : "Group Project Details";
@@ -60,7 +120,7 @@ export default function DashboardPage() {
   };
 
   const isDetailViewActive =
-    selectedProjectId !== null || selectedGroupProjectId !== null;
+    selectedAssignment !== null || selectedGroupProjectId !== null;
 
   const { data: session } = useSession();
 
@@ -79,7 +139,7 @@ export default function DashboardPage() {
           showBackButton={isDetailViewActive}
           userName={session?.user?.name}
           onBack={() => {
-            setSelectedProjectId(null);
+            setSelectedAssignment(null);
             setSelectedGroupProjectId(null);
           }}
         />
@@ -93,40 +153,65 @@ export default function DashboardPage() {
                 onSelectProject={handleSelectProjectFromCalendar}
               />
             ) : activeTab === "individual" ? (
-              selectedProjectId !== null ? (
-  <div>Assignment Details Coming Soon...</div>
-) : (
+              selectedAssignment !== null ? (
+                <AssignmentDetailView
+                  assignment={selectedAssignment}
+                  onEdit={(assignment) => {
+                    setEditingAssignment(assignment);
+                    setIsAddAssignmentOpen(true);
+                    setSelectedAssignment(assignment);
+                  }}
+                  onDelete={(id) => {
+                    removeAssignment(id);
+                  }}
+                />
+              ) : (
                 <div className="space-y-8">
                   <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
                     <div>
-                      <p className="text-sm font-semibold text-slate-900">Add a new assignment</p>
+                      <p className="text-sm font-semibold text-slate-900">
+                        Add a new assignment
+                      </p>
                       <p className="mt-1 text-sm text-slate-500">
-                        Open the form to create a single assignment for your individual projects.
+                        Open the form to create a single assignment for your
+                        individual projects.
                       </p>
                     </div>
 
                     <button
                       type="button"
-                      onClick={() => setIsAddAssignmentOpen((current) => !current)}
+                      onClick={() => {
+                        setEditingAssignment(null);
+                        setIsAddAssignmentOpen((current) => !current);
+                      }}
                       className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-950/15 transition hover:-translate-y-0.5 hover:bg-slate-800"
                     >
                       {isAddAssignmentOpen ? "Hide Form" : "Add Assignment"}
                     </button>
                   </div>
 
-                  {isAddAssignmentOpen ? <AddAssignmentForm
-  onAssignmentAdded={() => {
-    setRefreshKey((prev) => prev + 1);
-    setIsAddAssignmentOpen(false);
-  }}
-/> : null}
+                  {isAddAssignmentOpen ? (
+                    <AddAssignmentForm
+                      assignment={editingAssignment}
+                      onAssignmentAdded={(assignment) => {
+                        upsertAssignment(assignment);
+                        setIsAddAssignmentOpen(false);
+                        setEditingAssignment(null);
+                      }}
+                    />
+                  ) : null}
 
                   <IndividualProjectsTab
-    key={refreshKey}
-    onSelectProject={(id) => {
-      console.log(id);
-    }}
-/>
+                    assignments={assignments}
+                    onDelete={removeAssignment}
+                    onSelectProject={(assignment) => {
+                      setSelectedAssignment(assignment);
+                    }}
+                    onEdit={(assignment) => {
+                      setEditingAssignment(assignment);
+                      setIsAddAssignmentOpen(true);
+                    }}
+                  />
                 </div>
               )
             ) : selectedGroupProjectId !== null ? (
@@ -139,6 +224,23 @@ export default function DashboardPage() {
               <GroupProjectsTab onSelectProject={setSelectedGroupProjectId} />
             )}
           </div>
+          {isAddAssignmentOpen && editingAssignment ? (
+            <Modal
+              onClose={() => {
+                setIsAddAssignmentOpen(false);
+                setEditingAssignment(null);
+              }}
+            >
+              <AddAssignmentForm
+                assignment={editingAssignment}
+                onAssignmentAdded={(assignment) => {
+                  upsertAssignment(assignment);
+                  setIsAddAssignmentOpen(false);
+                  setEditingAssignment(null);
+                }}
+              />
+            </Modal>
+          ) : null}
         </div>
       </main>
     </div>
