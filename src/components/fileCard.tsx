@@ -1,4 +1,4 @@
-import { DriveFile } from "./fileTypes";
+import { DriveFile } from "../types/fileTypes";
 import { FileText, MoreVertical } from "lucide-react";
 
 interface FileCardProps {

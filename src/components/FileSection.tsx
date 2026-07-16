@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { DriveFile } from "./fileTypes";
+import { DriveFile } from "../types//fileTypes";
 import FileCard from "./fileCard";
 
 interface FileSectionProps {
