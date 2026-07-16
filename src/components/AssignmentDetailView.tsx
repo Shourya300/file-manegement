@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Assignment } from "./assignmentTypes";
+import FileSection from "./FileSection";
 import {
   CalendarDays,
   Clock3,
@@ -358,14 +359,7 @@ export default function AssignmentDetailView({
             </div>
 
             {/* TODO: Integrate this section with Google Drive file attachments later. */}
-            <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50/70 px-5 py-10 text-center">
-              <p className="text-sm font-medium text-slate-700">
-                No files uploaded yet.
-              </p>
-              <p className="mt-2 text-sm text-slate-500">
-                Files will appear here once attachments are added.
-              </p>
-            </div>
+            <FileSection assignmentId={assignment._id} />
           </article>
         </aside>
       </div>
