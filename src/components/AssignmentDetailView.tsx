@@ -239,37 +239,10 @@ export default function AssignmentDetailView({
                 <h2 className="text-lg font-semibold text-slate-900">
                   Assignment Information
                 </h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  Key dates and status at a glance.
-                </p>
               </div>
             </div>
 
             <dl className="space-y-4">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-                <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                  Subject
-                </dt>
-                <dd className="mt-2 text-sm font-medium text-slate-900">
-                  {assignment.subject}
-                </dd>
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-                <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                  Due Date
-                </dt>
-                <dd className="mt-2 text-sm font-medium text-slate-900">
-                  {dueDate}
-                </dd>
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-                <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                  Status
-                </dt>
-                <dd className="mt-2 text-sm font-medium text-slate-900">
-                  {currentStatus}
-                </dd>
-              </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
                 <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
                   Update Status
@@ -293,14 +266,7 @@ export default function AssignmentDetailView({
                   ) : null}
                 </dd>
               </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-                <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                  Created At
-                </dt>
-                <dd className="mt-2 text-sm font-medium text-slate-900">
-                  {createdAt}
-                </dd>
-              </div>
+              
               <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
                 <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
                   Last Updated
@@ -340,10 +306,6 @@ export default function AssignmentDetailView({
                 <Trash2 size={16} />
                 Delete Assignment
               </button>
-              <p className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-slate-600">
-                Use the status dropdown in the assignment information panel to
-                update progress.
-              </p>
             </div>
           </article>
 

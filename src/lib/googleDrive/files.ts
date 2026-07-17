@@ -30,3 +30,14 @@ export async function uploadFile(
 
   return response.data;
 }
+
+export async function deleteFile(
+  accessToken: string,
+  driveFileId: string
+) {
+  const drive = getGoogleDrive(accessToken);
+
+  await drive.files.delete({
+    fileId: driveFileId,
+  });
+}

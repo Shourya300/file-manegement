@@ -13,6 +13,7 @@ export default function FileSection({ assignmentId }: FileSectionProps) {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const [deletingIds, setDeletingIds] = useState<string[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -107,6 +108,47 @@ export default function FileSection({ assignmentId }: FileSectionProps) {
     window.open(data.webViewLink, "_blank");
   }
 
+  async function handleDelete(file: DriveFile) {
+    const confirmed = window.confirm(`Delete "${file.fileName}"?`);
+
+    if (!confirmed) return;
+    setDeletingIds((prev) => [...prev, file._id]);
+
+    try {
+      const response = await fetch(`/api/files/${file._id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete file");
+      }
+
+      await fetchFiles();
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "Failed to delete file.",
+      );
+    } finally {
+      setDeletingIds((prev) => prev.filter((id) => id !== file._id));
+    }
+  }
+
+  async function handleDownload(file: DriveFile) {
+    try {
+      const response = await fetch(`/api/files/download/${file._id}`);
+
+      if (!response.ok) {
+        throw new Error("Failed to download file");
+      }
+
+      const data = await response.json();
+
+      window.open(data.downloadUrl, "_blank");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Download failed.");
+    }
+  }
+
   return (
     <div className="space-y-4">
       <input
@@ -134,7 +176,14 @@ export default function FileSection({ assignmentId }: FileSectionProps) {
       ) : (
         <div className="space-y-2">
           {files.map((file) => (
-            <FileCard key={file.driveFileId} file={file} onOpen={handleOpen} />
+            <FileCard
+              key={file._id}
+              file={file}
+              onOpen={handleOpen}
+              onDelete={handleDelete}
+              onDownload={handleDownload}
+              isDeleting={deletingIds.includes(file._id)}
+            />
           ))}
         </div>
       )}
