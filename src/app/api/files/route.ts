@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
 import { uploadFile } from "@/lib/googleDrive";
 import { ObjectId } from "mongodb";
+import { logActivity } from "@/lib/activity";
 
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
@@ -120,6 +121,16 @@ export async function POST(request: Request) {
 
       uploadedAt: new Date(),
     });
+
+    await logActivity({
+  assignmentId,
+  userEmail: session.user.email,
+  type: "FILE_UPLOADED",
+  message: `Uploaded ${file.name}`,
+  metadata: {
+    fileName: file.name,
+  },
+});
 
     return Response.json(
       {

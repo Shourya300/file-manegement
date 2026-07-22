@@ -26,6 +26,7 @@ export default function DashboardPage() {
   const [isAddAssignmentOpen, setIsAddAssignmentOpen] = useState(false);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [isLoadingAssignments, setIsLoadingAssignments] = useState(false);
+  const [activityRefresh, setActivityRefresh] = useState(0);
 
   useEffect(() => {
     const loadAssignments = async () => {
@@ -67,6 +68,7 @@ export default function DashboardPage() {
 
   const handleAssignmentSave = (assignment: Assignment) => {
     upsertAssignment(assignment);
+    setActivityRefresh((prev) => prev + 1);
     setSelectedAssignment(assignment);
     setEditingAssignment(null);
     setIsAddAssignmentOpen(false);
@@ -101,6 +103,7 @@ export default function DashboardPage() {
 
     if (result.assignment) {
       upsertAssignment(result.assignment);
+      setActivityRefresh((prev) => prev + 1);
       return;
     }
 
@@ -109,6 +112,7 @@ export default function DashboardPage() {
       status: nextStatus,
       updatedAt: new Date().toISOString(),
     });
+    setActivityRefresh((prev) => prev + 1);
   };
 
   const removeAssignment = (assignmentId: string) => {
@@ -155,6 +159,7 @@ export default function DashboardPage() {
       }
 
       removeAssignment(assignment._id);
+      setActivityRefresh((prev) => prev + 1);
       setSelectedAssignment(null);
       setEditingAssignment(null);
       setIsAddAssignmentOpen(false);
@@ -240,6 +245,7 @@ export default function DashboardPage() {
               selectedAssignment !== null ? (
                 <AssignmentDetailView
                   assignment={selectedAssignment}
+                  activityRefresh={activityRefresh}
                   onEdit={(assignment) => {
                     setEditingAssignment(assignment);
                     setIsAddAssignmentOpen(true);

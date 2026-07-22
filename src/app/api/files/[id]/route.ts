@@ -1,5 +1,6 @@
 import { ObjectId } from "mongodb";
 import { getServerSession } from "next-auth";
+import { logActivity } from "@/lib/activity";
 
 import clientPromise from "@/lib/mongodb";
 import { authOptions } from "../../auth/[...nextauth]/route";
@@ -11,27 +12,18 @@ interface RouteContext {
   }>;
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: RouteContext
-) {
+export async function DELETE(request: Request, { params }: RouteContext) {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.email) {
-      return Response.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
 
     if (!ObjectId.isValid(id)) {
-      return Response.json(
-        { error: "Invalid file id" },
-        { status: 400 }
-      );
+      return Response.json({ error: "Invalid file id" }, { status: 400 });
     }
 
     const client = await clientPromise;
@@ -44,17 +36,27 @@ export async function DELETE(
     });
 
     if (!file) {
-      return Response.json(
-        { error: "File not found" },
-        { status: 404 }
-      );
+      return Response.json({ error: "File not found" }, { status: 404 });
     }
 
     if (file.userEmail !== session.user.email) {
-      return Response.json(
-        { error: "Forbidden" },
-        { status: 403 }
-      );
+      return Response.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const result = await filesCollection.deleteOne({
+      _id: new ObjectId(id),
+    });
+
+    if (result.deletedCount === 1) {
+      await logActivity({
+        assignmentId: file.assignmentId,
+        userEmail: session.user.email,
+        type: "FILE_DELETED",
+        message: `Deleted ${file.fileName}`,
+        metadata: {
+          fileName: file.fileName,
+        },
+      });
     }
 
     const accessToken = session.accessToken;
@@ -62,14 +64,11 @@ export async function DELETE(
     if (!accessToken) {
       return Response.json(
         { error: "Google Drive not authenticated" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
-    await deleteFile(
-      accessToken,
-      file.driveFileId
-    );
+    await deleteFile(accessToken, file.driveFileId);
 
     await filesCollection.deleteOne({
       _id: new ObjectId(id),
@@ -78,13 +77,9 @@ export async function DELETE(
     return Response.json({
       success: true,
     });
-
   } catch (error) {
     console.error(error);
 
-    return Response.json(
-      { error: "Failed to delete file" },
-      { status: 500 }
-    );
+    return Response.json({ error: "Failed to delete file" }, { status: 500 });
   }
 }

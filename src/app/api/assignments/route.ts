@@ -2,6 +2,7 @@ import clientPromise from "@/lib/mongodb";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
 import { createAssignmentFolder } from "@/lib/googleDrive";
+import { logActivity } from "@/lib/activity";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
   }
   const client = await clientPromise;
   const db = client.db("StudentDash");
-    const usersCollection = db.collection("users");
+  const usersCollection = db.collection("users");
 
   const currentUser = await usersCollection.findOne({
     email: session.user.email,
@@ -75,6 +76,13 @@ export async function POST(request: Request) {
 
     createdAt: new Date(),
     updatedAt: new Date(),
+  });
+
+  await logActivity({
+    assignmentId: result.insertedId.toString(),
+    userEmail: session.user.email,
+    type: "ASSIGNMENT_CREATED",
+    message: "Created assignment",
   });
 
   return Response.json(

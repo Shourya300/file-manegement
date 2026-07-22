@@ -6,9 +6,13 @@ import FileCard from "./fileCard";
 
 interface FileSectionProps {
   assignmentId: string;
+  onFilesChanged?: () => void;
 }
 
-export default function FileSection({ assignmentId }: FileSectionProps) {
+export default function FileSection({
+  assignmentId,
+  onFilesChanged,
+}: FileSectionProps) {
   const [files, setFiles] = useState<DriveFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -61,6 +65,7 @@ export default function FileSection({ assignmentId }: FileSectionProps) {
       }
 
       await fetchFiles();
+      onFilesChanged?.();
     } catch (error) {
       setError(error instanceof Error ? error.message : "Upload failed.");
     } finally {
@@ -124,6 +129,7 @@ export default function FileSection({ assignmentId }: FileSectionProps) {
       }
 
       await fetchFiles();
+      onFilesChanged?.();
     } catch (error) {
       setError(
         error instanceof Error ? error.message : "Failed to delete file.",

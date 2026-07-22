@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Assignment } from "./assignmentTypes";
 import FileSection from "./FileSection";
+import ActivityTimeline from "./ActivityTimeline";
 import {
   CalendarDays,
   Clock3,
@@ -16,6 +17,7 @@ import {
 
 type Props = {
   assignment: Assignment;
+  activityRefresh: number;
   onEdit: (assignment: Assignment) => void;
   onDelete: (assignment: Assignment) => void;
   onStatusChange: (
@@ -57,6 +59,7 @@ const statusOptions: Assignment["status"][] = [
 
 export default function AssignmentDetailView({
   assignment,
+  activityRefresh,
   onEdit,
   onDelete,
   onStatusChange,
@@ -64,6 +67,7 @@ export default function AssignmentDetailView({
   const [currentStatus, setCurrentStatus] = useState(assignment.status);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [statusError, setStatusError] = useState("");
+  const [fileRefreshKey, setFileRefreshKey] = useState(0);
 
   useEffect(() => {
     setCurrentStatus(assignment.status);
@@ -99,24 +103,6 @@ export default function AssignmentDetailView({
       setIsUpdatingStatus(false);
     }
   };
-
-  const timelineItems = [
-    {
-      title: "Assignment created",
-      detail: "Placeholder event for the future activity stream.",
-      time: createdAt,
-    },
-    {
-      title: "Status review",
-      detail: "Placeholder event showing a later status change.",
-      time: "Recent",
-    },
-    {
-      title: "File upload",
-      detail: "Placeholder event for a future Drive attachment.",
-      time: "Later",
-    },
-  ];
 
   return (
     <section className="space-y-6">
@@ -197,38 +183,10 @@ export default function AssignmentDetailView({
             </div>
 
             {/* TODO: Replace this placeholder timeline with file uploads, status changes, assignment edits, and Google Drive activity. */}
-            <div className="relative pl-4">
-              <div className="absolute left-[13px] top-2 bottom-2 w-px bg-slate-200" />
-
-              <div className="space-y-5">
-                {timelineItems.map((item, index) => (
-                  <div key={item.title} className="relative flex gap-4">
-                    <div className="relative z-10 mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm">
-                      <div className="h-2.5 w-2.5 rounded-full bg-slate-400" />
-                    </div>
-
-                    <div className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-                      <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-                        <div>
-                          <h3 className="text-sm font-semibold text-slate-900">
-                            {item.title}
-                          </h3>
-                          <p className="mt-1 text-sm text-slate-500">
-                            {item.detail}
-                          </p>
-                        </div>
-                        <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">
-                          {item.time}
-                        </span>
-                      </div>
-                      {index < timelineItems.length - 1 ? (
-                        <div className="mt-4 h-px w-full bg-slate-200" />
-                      ) : null}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <ActivityTimeline
+              assignmentId={assignment._id}
+              refreshKey={activityRefresh + fileRefreshKey}
+            />
           </article>
         </div>
 
@@ -249,7 +207,6 @@ export default function AssignmentDetailView({
                 </dt>
                 <dd className="mt-3">
                   <select
-                    value={currentStatus}
                     onChange={handleStatusChange}
                     disabled={isUpdatingStatus}
                     className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100 disabled:cursor-not-allowed disabled:bg-slate-100"
@@ -321,7 +278,10 @@ export default function AssignmentDetailView({
             </div>
 
             {/* TODO: Integrate this section with Google Drive file attachments later. */}
-            <FileSection assignmentId={assignment._id} />
+            <FileSection
+              assignmentId={assignment._id}
+              onFilesChanged={() => setFileRefreshKey((prev) => prev + 1)}
+            />
           </article>
         </aside>
       </div>
