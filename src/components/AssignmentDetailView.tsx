@@ -170,19 +170,6 @@ export default function AssignmentDetailView({
           </article>
 
           <article className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-            <div className="mb-6 flex items-center justify-between gap-4">
-              <div>
-                <h2 className="text-lg font-semibold text-slate-900">Activity</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  Placeholder timeline for future assignment history.
-                </p>
-              </div>
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                Timeline
-              </span>
-            </div>
-
-            {/* TODO: Replace this placeholder timeline with file uploads, status changes, assignment edits, and Google Drive activity. */}
             <ActivityTimeline
               assignmentId={assignment._id}
               refreshKey={activityRefresh + fileRefreshKey}

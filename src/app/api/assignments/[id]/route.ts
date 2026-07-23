@@ -102,7 +102,7 @@ export async function PUT(
       });
     }
 
-    if (oldAssignment.status !== body.status) {
+    if (body.status !== undefined && oldAssignment.status !== body.status) {
       changes.push({
         field: "Status",
         oldValue: oldAssignment.status,
@@ -121,19 +121,24 @@ if (oldDate !== newDate) {
   });
 }
 
+    const updateFields: Record<string, unknown> = {
+      title: body.title,
+      subject: body.subject,
+      description: body.description,
+      dueDate: new Date(body.dueDate),
+      updatedAt: new Date(),
+    };
+
+    if (body.status !== undefined) {
+      updateFields.status = body.status;
+    }
+
     const result = await assignmentsCollection.updateOne(
       {
         _id: new ObjectId(id),
       },
       {
-        $set: {
-          title: body.title,
-          subject: body.subject,
-          description: body.description,
-          status: body.status,
-          dueDate: new Date(body.dueDate),
-          updatedAt: new Date(),
-        },
+        $set: updateFields,
       },
     );
 

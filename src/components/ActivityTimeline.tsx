@@ -53,8 +53,8 @@ export default function ActivityTimeline({
   }
 
   return (
-    <div className="mt-6">
-      <h2 className="text-lg font-semibold mb-3">
+    <div className="">
+      <h2 className="text-lg font-semibold mb-5">
         Activity Timeline
       </h2>
 
