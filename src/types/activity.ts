@@ -21,6 +21,7 @@ export interface Activity {
 
   metadata?: {
   changes?: ActivityChange[];
+  fileName?: string;
 };
 }
 
